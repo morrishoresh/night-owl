@@ -1,6 +1,6 @@
 # NightOwl
 
-Menu bar indicator and switch for keeping a Mac awake (e.g. while AI agents run).
+Menu bar indicator and switch for keeping a Mac awake.
 
 - Yellow owl: NightOwl's **Keep Mac Awake** switch is on.
 - White owl (black on a light menu bar): the switch is off, but another source is keeping the Mac from idle sleep.
