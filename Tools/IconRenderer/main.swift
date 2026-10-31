@@ -36,21 +36,12 @@ case "appicon":
     }
 case "preview":
     for (modeName, mode) in [("on", OwlArt.Mode.keptAwake), ("display", .keptAwakeWithDisplay), ("others", .awakeByOthers), ("off", .canSleep)] {
-        for (bgName, bg, fg) in [("light", NSColor.white, NSColor.black), ("dark", NSColor.black, NSColor.white)] {
+        for (bgName, bg) in [("light", NSColor.white), ("dark", NSColor.black)] {
             let name = "menubar-\(modeName)-\(bgName).png"
             try renderPNG(pixels: 144, to: out.appendingPathComponent(name)) {
                 bg.setFill()
                 NSRect(x: 0, y: 0, width: 144, height: 144).fill()
-                let glyph = OwlArt.menuBarImage(mode)
-                let tinted = NSImage(size: glyph.size, flipped: false) { rect in
-                    glyph.draw(in: rect)
-                    if glyph.isTemplate {
-                        fg.set()
-                        rect.fill(using: .sourceAtop)
-                    }
-                    return true
-                }
-                tinted.draw(in: NSRect(x: 0, y: 0, width: 144, height: 144))
+                OwlArt.menuBarImage(mode).draw(in: NSRect(x: 0, y: 0, width: 144, height: 144))
             }
         }
     }

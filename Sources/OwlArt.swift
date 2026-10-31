@@ -52,35 +52,21 @@ enum OwlArt {
 
     // MARK: - Menu bar glyph
 
-    /// `keptAwake` is the brown owl from the app icon with closed eyes (the display may sleep);
-    /// `keptAwakeWithDisplay` is the same owl in blue with open eyes. The other modes are the same owl as a line drawing; `awakeByOthers` is a template image, so it follows the menu bar appearance
-    /// (white on dark, black on light).
+    /// The same owl in every mode, in a different palette:
+    /// - `keptAwake`: brown, as in the app icon, eyes closed (the display may sleep)
+    /// - `keptAwakeWithDisplay`: blue, eyes open
+    /// - `awakeByOthers`: white, eyes closed
+    /// - `canSleep`: gray, eyes closed
     static func menuBarImage(_ mode: Mode) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             switch mode {
-            case .keptAwake:
-                drawColorOwl(outlineWidth: 0.9, eyesClosed: true)
-                return true
-            case .keptAwakeWithDisplay:
-                drawColorOwl(outlineWidth: 0.9, eyesClosed: false, palette: .blue)
-                return true
-            case .awakeByOthers: NSColor.black.set()
-            case .canSleep: NSColor.systemGray.set()
+            case .keptAwake: drawColorOwl(outlineWidth: 0.9, eyesClosed: true)
+            case .keptAwakeWithDisplay: drawColorOwl(outlineWidth: 0.9, eyesClosed: false, palette: .blue)
+            case .awakeByOthers: drawColorOwl(outlineWidth: 0.9, eyesClosed: true, palette: .white)
+            case .canSleep: drawColorOwl(outlineWidth: 0.9, eyesClosed: true, palette: .gray)
             }
-            let head = headPath()
-            head.lineWidth = 1.3
-            head.lineJoinStyle = .round
-            head.stroke()
-            for c in eyeCenters {
-                let eye = circle(c, eyeRadius)
-                eye.lineWidth = 1.1
-                eye.stroke()
-                circle(c, 1.15).fill()
-            }
-            beakPath().fill()
             return true
         }
-        image.isTemplate = mode == .awakeByOthers
         switch mode {
         case .keptAwake: image.accessibilityDescription = "NightOwl is keeping the Mac awake"
         case .keptAwakeWithDisplay: image.accessibilityDescription = "NightOwl is keeping the Mac and display awake"
@@ -92,13 +78,14 @@ enum OwlArt {
 
     // MARK: - Colored owl
 
-    /// Plumage colors of the colored owl. Eyes and beak are the same in every palette.
+    /// Plumage and beak colors of the colored owl. Open eyes are the same in every palette.
     struct Palette {
         let headTop: NSColor
         let headBottom: NSColor
         let outline: NSColor
         let facialDisc: NSColor
         let eyelid: NSColor
+        var beak = NSColor(srgbRed: 0.93, green: 0.48, blue: 0.13, alpha: 1)
 
         static let brown = Palette(
             headTop: NSColor(srgbRed: 0.87, green: 0.56, blue: 0.25, alpha: 1),
@@ -113,6 +100,22 @@ enum OwlArt {
             outline: NSColor(srgbRed: 0.05, green: 0.13, blue: 0.38, alpha: 1),
             facialDisc: NSColor(srgbRed: 0.82, green: 0.91, blue: 1.00, alpha: 1),
             eyelid: NSColor(srgbRed: 0.25, green: 0.50, blue: 0.92, alpha: 1))
+
+        static let white = Palette(
+            headTop: NSColor(white: 0.98, alpha: 1),
+            headBottom: NSColor(white: 0.78, alpha: 1),
+            outline: NSColor(white: 0.22, alpha: 1),
+            facialDisc: NSColor(white: 1.00, alpha: 1),
+            eyelid: NSColor(white: 0.86, alpha: 1),
+            beak: NSColor(white: 0.50, alpha: 1))
+
+        static let gray = Palette(
+            headTop: NSColor(white: 0.60, alpha: 1),
+            headBottom: NSColor(white: 0.42, alpha: 1),
+            outline: NSColor(white: 0.20, alpha: 1),
+            facialDisc: NSColor(white: 0.76, alpha: 1),
+            eyelid: NSColor(white: 0.52, alpha: 1),
+            beak: NSColor(white: 0.30, alpha: 1))
     }
 
     /// Draws the colored owl on the 18x18 design grid in the current coordinate system.
@@ -141,7 +144,7 @@ enum OwlArt {
             circle(NSPoint(x: c.x + 0.5, y: c.y + 0.5), 0.42).fill()
         }
 
-        NSColor(srgbRed: 0.93, green: 0.48, blue: 0.13, alpha: 1).set()
+        palette.beak.set()
         beakPath().fill()
     }
 
