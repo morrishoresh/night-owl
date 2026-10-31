@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>NightOwl</string>
     <key>CFBundleIdentifier</key>
-    <string>local.morrish.NightOwl</string>
+    <string>com.morrishoresh.NightOwl</string>
     <key>CFBundleExecutable</key>
     <string>NightOwl</string>
     <key>CFBundleIconFile</key>
