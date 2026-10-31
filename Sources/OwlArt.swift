@@ -4,8 +4,10 @@ import AppKit
 /// Shapes are defined on an 18x18 design grid (origin bottom-left).
 enum OwlArt {
     enum Mode {
-        /// NightOwl's own switch is on.
+        /// NightOwl's own switch is on; the display may still sleep.
         case keptAwake
+        /// NightOwl's own switch and Keep Display On Too are both on.
+        case keptAwakeWithDisplay
         /// Switch is off, but something else (System Settings, caffeinate, an app) keeps the Mac awake.
         case awakeByOthers
         /// Nothing prevents sleep.
@@ -50,12 +52,18 @@ enum OwlArt {
 
     // MARK: - Menu bar glyph
 
-    /// Same owl in every mode; only the color changes. `awakeByOthers` is a template image,
-    /// so it follows the menu bar appearance (white on dark, black on light).
+    /// `keptAwake` is the brown owl from the app icon with closed eyes (the display may sleep);
+    /// `keptAwakeWithDisplay` is the same owl in blue with open eyes. The other modes are the same owl as a line drawing; `awakeByOthers` is a template image, so it follows the menu bar appearance
+    /// (white on dark, black on light).
     static func menuBarImage(_ mode: Mode) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             switch mode {
-            case .keptAwake: NSColor.systemYellow.set()
+            case .keptAwake:
+                drawColorOwl(outlineWidth: 0.9, eyesClosed: true)
+                return true
+            case .keptAwakeWithDisplay:
+                drawColorOwl(outlineWidth: 0.9, eyesClosed: false, palette: .blue)
+                return true
             case .awakeByOthers: NSColor.black.set()
             case .canSleep: NSColor.systemGray.set()
             }
@@ -75,10 +83,82 @@ enum OwlArt {
         image.isTemplate = mode == .awakeByOthers
         switch mode {
         case .keptAwake: image.accessibilityDescription = "NightOwl is keeping the Mac awake"
+        case .keptAwakeWithDisplay: image.accessibilityDescription = "NightOwl is keeping the Mac and display awake"
         case .awakeByOthers: image.accessibilityDescription = "Mac is kept awake by another source"
         case .canSleep: image.accessibilityDescription = "Mac can sleep"
         }
         return image
+    }
+
+    // MARK: - Colored owl
+
+    /// Plumage colors of the colored owl. Eyes and beak are the same in every palette.
+    struct Palette {
+        let headTop: NSColor
+        let headBottom: NSColor
+        let outline: NSColor
+        let facialDisc: NSColor
+        let eyelid: NSColor
+
+        static let brown = Palette(
+            headTop: NSColor(srgbRed: 0.87, green: 0.56, blue: 0.25, alpha: 1),
+            headBottom: NSColor(srgbRed: 0.58, green: 0.33, blue: 0.15, alpha: 1),
+            outline: NSColor(srgbRed: 0.33, green: 0.18, blue: 0.08, alpha: 1),
+            facialDisc: NSColor(srgbRed: 0.98, green: 0.84, blue: 0.62, alpha: 1),
+            eyelid: NSColor(srgbRed: 0.78, green: 0.48, blue: 0.21, alpha: 1))
+
+        static let blue = Palette(
+            headTop: NSColor(srgbRed: 0.36, green: 0.62, blue: 1.00, alpha: 1),
+            headBottom: NSColor(srgbRed: 0.13, green: 0.33, blue: 0.80, alpha: 1),
+            outline: NSColor(srgbRed: 0.05, green: 0.13, blue: 0.38, alpha: 1),
+            facialDisc: NSColor(srgbRed: 0.82, green: 0.91, blue: 1.00, alpha: 1),
+            eyelid: NSColor(srgbRed: 0.25, green: 0.50, blue: 0.92, alpha: 1))
+    }
+
+    /// Draws the colored owl on the 18x18 design grid in the current coordinate system.
+    static func drawColorOwl(outlineWidth: CGFloat, eyesClosed: Bool = false, palette: Palette = .brown) {
+        let head = headPath()
+        NSGradient(starting: palette.headTop, ending: palette.headBottom)?.draw(in: head, angle: 90)
+        palette.outline.set()
+        head.lineWidth = outlineWidth
+        head.lineJoinStyle = .round
+        head.stroke()
+
+        // Facial disc around each eye.
+        palette.facialDisc.set()
+        for c in eyeCenters { circle(c, 3.3).fill() }
+
+        for c in eyeCenters {
+            if eyesClosed {
+                drawClosedEye(at: c, lineWidth: outlineWidth, palette: palette)
+                continue
+            }
+            NSColor(srgbRed: 1, green: 0.79, blue: 0.20, alpha: 1).set()
+            circle(c, eyeRadius).fill()
+            NSColor(srgbRed: 0.10, green: 0.08, blue: 0.16, alpha: 1).set()
+            circle(c, 1.35).fill()
+            NSColor.white.set()
+            circle(NSPoint(x: c.x + 0.5, y: c.y + 0.5), 0.42).fill()
+        }
+
+        NSColor(srgbRed: 0.93, green: 0.48, blue: 0.13, alpha: 1).set()
+        beakPath().fill()
+    }
+
+    /// Closed eye: the eye covered by its lid in the head color, with a dark downward-curved lash line.
+    private static func drawClosedEye(at c: NSPoint, lineWidth: CGFloat, palette: Palette) {
+        let r = eyeRadius + 0.05
+        palette.eyelid.set()
+        circle(c, r).fill()
+        palette.outline.set()
+        let lash = NSBezierPath()
+        lash.move(to: NSPoint(x: c.x - r * 0.8, y: c.y + 0.3))
+        lash.curve(to: NSPoint(x: c.x + r * 0.8, y: c.y + 0.3),
+                   controlPoint1: NSPoint(x: c.x - r * 0.4, y: c.y - 0.9),
+                   controlPoint2: NSPoint(x: c.x + r * 0.4, y: c.y - 0.9))
+        lash.lineWidth = lineWidth
+        lash.lineCapStyle = .round
+        lash.stroke()
     }
 
     // MARK: - App icon
@@ -122,29 +202,7 @@ enum OwlArt {
         owl.scale(by: 36)
         owl.concat()
 
-        let head = headPath()
-        NSGradient(starting: NSColor(srgbRed: 0.87, green: 0.56, blue: 0.25, alpha: 1),
-                   ending: NSColor(srgbRed: 0.58, green: 0.33, blue: 0.15, alpha: 1))?.draw(in: head, angle: 90)
-        NSColor(srgbRed: 0.33, green: 0.18, blue: 0.08, alpha: 1).set()
-        head.lineWidth = 0.35
-        head.lineJoinStyle = .round
-        head.stroke()
-
-        // Facial disc around each eye.
-        NSColor(srgbRed: 0.98, green: 0.84, blue: 0.62, alpha: 1).set()
-        for c in eyeCenters { circle(c, 3.3).fill() }
-
-        for c in eyeCenters {
-            NSColor(srgbRed: 1, green: 0.79, blue: 0.20, alpha: 1).set()
-            circle(c, eyeRadius).fill()
-            NSColor(srgbRed: 0.10, green: 0.08, blue: 0.16, alpha: 1).set()
-            circle(c, 1.35).fill()
-            NSColor.white.set()
-            circle(NSPoint(x: c.x + 0.5, y: c.y + 0.5), 0.42).fill()
-        }
-
-        NSColor(srgbRed: 0.93, green: 0.48, blue: 0.13, alpha: 1).set()
-        beakPath().fill()
+        drawColorOwl(outlineWidth: 0.35)
         NSGraphicsContext.restoreGraphicsState()
 
         // Branch the owl perches on.

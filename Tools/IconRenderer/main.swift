@@ -35,7 +35,7 @@ case "appicon":
         }
     }
 case "preview":
-    for (modeName, mode) in [("on", OwlArt.Mode.keptAwake), ("others", .awakeByOthers), ("off", .canSleep)] {
+    for (modeName, mode) in [("on", OwlArt.Mode.keptAwake), ("display", .keptAwakeWithDisplay), ("others", .awakeByOthers), ("off", .canSleep)] {
         for (bgName, bg, fg) in [("light", NSColor.white, NSColor.black), ("dark", NSColor.black, NSColor.white)] {
             let name = "menubar-\(modeName)-\(bgName).png"
             try renderPNG(pixels: 144, to: out.appendingPathComponent(name)) {

@@ -2,7 +2,8 @@
 
 Menu bar indicator and switch for keeping a Mac awake.
 
-- Yellow owl: NightOwl's **Keep Mac Awake** switch is on.
+- Brown owl with closed eyes (as in the app icon): NightOwl's **Keep Mac Awake** switch is on; the display may still sleep.
+- Blue owl with open eyes: **Keep Display On Too** is also on.
 - White owl (black on a light menu bar): the switch is off, but another source is keeping the Mac from idle sleep.
 - Gray owl: the Mac can sleep normally.
 

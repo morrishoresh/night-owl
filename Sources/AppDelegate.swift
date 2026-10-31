@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let monitor = SleepMonitor()
     private let keepAwake = KeepAwake()
     private let keptAwakeImage = OwlArt.menuBarImage(.keptAwake)
+    private let keptAwakeWithDisplayImage = OwlArt.menuBarImage(.keptAwakeWithDisplay)
     private let awakeByOthersImage = OwlArt.menuBarImage(.awakeByOthers)
     private let canSleepImage = OwlArt.menuBarImage(.canSleep)
 
@@ -25,7 +26,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateIcon(_ state: SleepState) {
         guard let button = statusItem.button else { return }
-        if keepAwake.isOn {
+        if keepAwake.keepsDisplayOn {
+            button.image = keptAwakeWithDisplayImage
+            button.toolTip = "NightOwl: keeping Mac and display awake"
+        } else if keepAwake.isOn {
             button.image = keptAwakeImage
             button.toolTip = "NightOwl: keeping Mac awake"
         } else if state.isAwake {
@@ -128,6 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleDisplay() {
         keepAwake.setDisplayOn(!keepAwake.keepsDisplayOn)
         monitor.refresh()
+        updateIcon(monitor.state)
     }
 
     @objc private func quitBlocker(_ sender: NSMenuItem) { endBlocker(sender, force: false) }
